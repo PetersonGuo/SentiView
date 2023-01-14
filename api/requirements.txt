@@ -3,3 +3,5 @@ cohere
 python-dotenv
 selenium
 openai
+flask-cors
+gunicorn

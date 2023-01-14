@@ -1,5 +1,5 @@
-"use client"
-import "../globals.css"
+"use client";
+import "../globals.css";
 import { openDatabase, deleteFormData } from "../idb";
 import { useEffect, useRef, useState } from "react";
 import Nav from "../Nav/Nav";
@@ -57,9 +57,14 @@ export default function Page(props) {
 		setLoading(true);
 
 		async function loadTable() {
-			await axios
-				.post("/acceptData", retrieveFormData('form'), {
-					Headers: { "Content-Type": "multipart/form-data" },
+			const form = await retrieveFormData("form");
+			console.log(form);
+			axios
+				.post("http://localhost:5000/api/acceptData", form, {
+					Headers: {
+						"Content-Type": "multipart/form-data",
+						"Access-Control-Allow-Origin": "*",
+					},
 				})
 				.then((res) => {
 					console.log(res.data);
@@ -78,14 +83,14 @@ export default function Page(props) {
 					setPosSent(res.data.PositiveInput);
 					setNegSent(res.data.NegativeInput);
 				})
-				.catch((err) => console.log(err));
+				.catch((err) => console.log(err.message));
 		}
 
 		loadTable()
 			.then(() => setLoading(false))
-			.catch((err) => console.log(err))
-            .finally(() => setLoading(false));
-        deleteFormData('form');
+			.catch((err) => console.log(err.message))
+			.finally(() => setLoading(false));
+		deleteFormData("form");
 	}, []);
 
 	const [modalText, setModalText] = useState("");
@@ -108,7 +113,7 @@ export default function Page(props) {
 							>
 								<h1
 									id="info"
-									className="p-[20px] text-[#FFD178] text-center h-full w-full overflow-y-scroll whitespace-pre-line"
+									className="p-[20px] text-[#FFD178] text-center h-full w-full overflow-y-auto whitespace-pre-line"
 								>
 									{modalText}
 								</h1>

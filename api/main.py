@@ -9,21 +9,24 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support import expected_conditions as EC
-
+from flask_cors import cross_origin
 
 options = Options()
-options.add_argument("--headless=new")
-
+# options.add_argument("--headless=new")
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
+options.add_argument("--disable-gpu")
 
 app = Flask(__name__)
 
 
-
-@app.route("/acceptData", methods=["POST"])
+@app.route("/api/acceptData", methods=["POST"])
+@cross_origin('http://127.0.0.1')
 def get_data():
     print(request.headers)
 
     request_data = request.form.to_dict()
+    print(request_data)
     data_type = int(request_data['type'])
 
     inputs = []
@@ -40,22 +43,21 @@ def get_data():
                 try:
                     driver.execute_script("arguments[0].scrollIntoView();", button)
                     button.click()
+                    time.sleep(.05)
                 except Exception as click_error:
                     print("Could not click button:", click_error)
         except Exception as e:
             print("Error:", e)
         inputs = [str(response.text) for response in driver.find_elements(By.CSS_SELECTOR, "div.MyEned")]
-        print(inputs)
         driver.quit()
     elif data_type == 1:
         inputs = request_data["data"].split(",")
-        print(inputs)
     elif data_type == 2:
         inputs = request.files["file"].read().decode("utf-8").split(",")
         for i in range(len(inputs)):
             inputs[i] = inputs[i].strip()
 
-    co = cohere.Client(f'{os.getenv("COHERE_KEY")}')
+    co = cohere.Client(f'{os.environ.get("COHERE_KEY")}')
 
     pos_reviews = []
     neg_reviews = []

@@ -1,6 +1,7 @@
 import {motion} from "framer-motion";
 import "./Box.css";
 import "../../globals.css";
+import Image from 'next/image';
 import {MdOutlineClose} from "react-icons/md";
 
 function Box(props) {
@@ -23,21 +24,21 @@ function Box(props) {
                 </div>
                 {!props.loading ? (
                     <div
-                        className="flex flex-col h-full justify-center overflow-y-scroll overflow-x-hidden">
+                        className="flex flex-col h-full justify-center overflow-y-auto overflow-x-hidden">
                         {props.children}
                     </div>
                 ) : (
-                    <img
+                    <Image
                         className={"m-auto"}
                         src={"/loading.gif"}
                         alt={"Loading..."}
                         width={50}
+                        height={50}
                     />
                 )}
             </div>
         </div>
-    )
-        ;
+    );
 }
 
 export default Box;

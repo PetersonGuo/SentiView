@@ -37,8 +37,8 @@ export default function Page() {
 	const setInfo = () => {
 		const formData = new FormData();
 		formData.append("type", type);
-    formData.append(type === 2 ? "file" : "data", data);
-    saveFormData("form", formData);
+		formData.append(type === 2 ? "file" : "data", data);
+		saveFormData("form", formData);
 	};
 
 	const goAnimate = (e) => {
