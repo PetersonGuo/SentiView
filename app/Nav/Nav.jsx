@@ -1,4 +1,3 @@
-import { Navbar } from "@material-tailwind/react";
 import { name } from "../consts";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,7 +9,7 @@ export default function Nav() {
 
 	return (
 		<AnimatePresence mode="wait" initial={false}>
-			<Navbar className="absolute -top-2 md:top-2 pl-[5%] self-start border-0 bg-darkBg">
+			<div className="absolute -top-2 md:top-2 pl-[5%] self-start border-0 bg-darkBg pt-5">
 				<button
 					className="flex flex-row top-2 left-20 items-center justify-items-center"
 					onClick={reset}
@@ -42,7 +41,7 @@ export default function Nav() {
 						{name}
 					</div>
 				</button>
-			</Navbar>
+			</div>
 		</AnimatePresence>
 	);
 }
