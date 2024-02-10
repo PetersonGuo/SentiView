@@ -1,5 +1,0 @@
-flask
-cohere
-python-dotenv
-selenium
-webdriver-manager
