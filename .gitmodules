@@ -1,0 +1,6 @@
+[submodule "bert"]
+	path = bert
+	url = https://github.com/google-research/bert
+[submodule "api/bert"]
+	path = api/bert
+	url = https://github.com/google-research/bert
