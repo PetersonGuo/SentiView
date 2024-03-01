@@ -9,15 +9,14 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support import expected_conditions as EC
-from openai import OpenAI
+
 
 options = Options()
-# options.add_argument("--headless=new")
-options.add_argument("--no-sandbox")
-options.add_argument("--disable-dev-shm-usage")
-options.add_argument("--disable-gpu")
+options.add_argument("--headless=new")
+
 
 app = Flask(__name__)
+
 
 
 @app.route("/acceptData", methods=["POST"])
@@ -41,91 +40,79 @@ def get_data():
                 try:
                     driver.execute_script("arguments[0].scrollIntoView();", button)
                     button.click()
-                    time.sleep(.05)
                 except Exception as click_error:
                     print("Could not click button:", click_error)
         except Exception as e:
             print("Error:", e)
         inputs = [str(response.text) for response in driver.find_elements(By.CSS_SELECTOR, "div.MyEned")]
+        print(inputs)
         driver.quit()
     elif data_type == 1:
         inputs = request_data["data"].split(",")
+        print(inputs)
     elif data_type == 2:
         inputs = request.files["file"].read().decode("utf-8").split(",")
         for i in range(len(inputs)):
             inputs[i] = inputs[i].strip()
 
-    # co = cohere.Client(f'{os.environ.get("COHERE_KEY")}')
+    co = cohere.Client(f'{os.getenv("COHERE_KEY")}')
 
-    # pos_reviews = []
-    # neg_reviews = []
+    pos_reviews = []
+    neg_reviews = []
 
-    # examples = map(lambda x: Example(text=x[0], label=x[1]), training_data.training_data)
+    examples = map(lambda x: Example(text=x[0], label=x[1]), training_data.training_data)
 
-    # response = co.classify(
-    #     model='large',
-    #     inputs=inputs,
-    #     examples=examples,
-    # )
-
-    # def class_reviews():
-    #     res_class = response.classifications
-
-    #     in_and_pred = zip(inputs, res_class)
-
-    #     for i in in_and_pred:
-    #         pred = i[1].predictions[0]
-    #         if pred == "neutral" or pred == "positive":
-    #             pos_reviews.append(i[0])
-    #         else:
-    #             neg_reviews.append(i[0])
-
-    #     return pos_reviews, neg_reviews
-
-    # def tokenize(pos_reviews, neg_reviews):
-    #     pos_words = {}
-    #     neg_words = {}
-    #     for i in pos_reviews:
-    #         for j in co.tokenize(i).token_strings:
-    #             if pos_words.get(j) is None:
-    #                 pos_words[j] = 1
-    #             else:
-    #                 pos_words[j] += 1
-
-    #     for i in neg_reviews:
-    #         for j in co.tokenize(i).token_strings:
-    #             if neg_words.get(j) is None:
-    #                 neg_words[j] = 1
-    #             else:
-    #                 neg_words[j] += 1
-
-    #     return pos_words, neg_words
-
-    # pos, neg = class_reviews()
-    # pos_dict, neg_dict = tokenize(pos, neg)
-    # cleaned_pos_dict = dict(sorted({k.strip(): v for (k, v) in pos_dict.items() if not k.strip().lower() in stopwords}
-    #                                .items(), key=lambda item: item[1], reverse=True))
-    # cleaned_neg_dict = dict(sorted({k.strip(): v for (k, v) in neg_dict.items() if not k.strip().lower() in stopwords}
-    #                                .items(), key=lambda item: item[1], reverse=True))
-
-    openai_key = os.environ.get("OPENAI_API_KEY")
-    client = OpenAI()
-    gpt_response = client.chat.completions.create(
-        model="gpt-3.5-turbo-0125",
-        response_format={ "type": "json_object" },
-        messages=[
-            {"role": "system", "content": "You are a business reviewer and give feedback on a business."},
-            {"role": "user", "content": inputs[0]},
-            {"role": "system", "content": "What are some improvements you would suggest?"}
-        ]
+    response = co.classify(
+        model='large',
+        inputs=inputs,
+        examples=examples,
     )
-    print(gpt_response.choices)
+
+    def class_reviews():
+        res_class = response.classifications
+
+        in_and_pred = zip(inputs, res_class)
+
+        for i in in_and_pred:
+            pred = i[1].predictions[0]
+            if pred == "neutral" or pred == "positive":
+                pos_reviews.append(i[0])
+            else:
+                neg_reviews.append(i[0])
+
+        return pos_reviews, neg_reviews
+
+    def tokenize(pos_reviews, neg_reviews):
+        pos_words = {}
+        neg_words = {}
+        for i in pos_reviews:
+            for j in co.tokenize(i).token_strings:
+                if pos_words.get(j) is None:
+                    pos_words[j] = 1
+                else:
+                    pos_words[j] += 1
+
+        for i in neg_reviews:
+            for j in co.tokenize(i).token_strings:
+                if neg_words.get(j) is None:
+                    neg_words[j] = 1
+                else:
+                    neg_words[j] += 1
+
+        return pos_words, neg_words
+
+    pos, neg = class_reviews()
+    pos_dict, neg_dict = tokenize(pos, neg)
+    cleaned_pos_dict = dict(sorted({k.strip(): v for (k, v) in pos_dict.items() if not k.strip().lower() in stopwords}
+                                   .items(), key=lambda item: item[1], reverse=True))
+    cleaned_neg_dict = dict(sorted({k.strip(): v for (k, v) in neg_dict.items() if not k.strip().lower() in stopwords}
+                                   .items(), key=lambda item: item[1], reverse=True))
+
     return {
-        'Improvements': gpt_response.choices[0].message.content,
-        # 'PositiveList': list(cleaned_pos_dict.items())[:5],
-        # 'NegativeList': list(cleaned_neg_dict.items())[:5],
-        # 'PositiveInput': pos,
-        # 'NegativeInput': neg
+        'PositiveList': list(cleaned_pos_dict.items())[:5],
+        'NegativeList': list(cleaned_neg_dict.items())[:5],
+        'PositiveInput': pos,
+        'NegativeInput': neg
     }
 
 
